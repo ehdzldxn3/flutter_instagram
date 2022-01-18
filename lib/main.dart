@@ -78,7 +78,7 @@ class Home extends StatelessWidget {
   const Home({Key? key, this.data}) : super(key: key);
   //부모가 보내준 데이터는 수정하지 않는다
   final data;
-  
+
   @override
   Widget build(BuildContext context) {
     if(data.isNotEmpty){
@@ -107,7 +107,6 @@ class Home extends StatelessWidget {
           });
     } else {
       return CircularProgressIndicator();
-      prit
     }
 
   }
