@@ -62,10 +62,11 @@ class _MyAppState extends State<MyApp> {
             IconButton(
                 icon: Icon(Icons.add_box_outlined),
                 onPressed: () async {
-                  // 갤러리에서 이미지 가져오기 셋팅
+                  // 갤러리에서 이미지 가져오기 셋팅 
+                  //안드로이드는 사진첩에 그냥 접근 가능
                   ImagePicker picker = ImagePicker();
-                  var image = await picker.pickImage(source: ImageSource.gallery);
-
+                  var img = await picker.pickImage(source: ImageSource.gallery);
+                  
                   Navigator.push(context,
                     MaterialPageRoute(builder: (context) => Upload())
                   );
