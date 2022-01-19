@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import './style.dart' as style;
 import 'package:http/http.dart' as http;  //http 요청
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 void main() {
   runApp(
@@ -33,6 +35,14 @@ class _MyAppState extends State<MyApp> {
       //json 파싱
       var res = jsonDecode(get.body);
       data = res;
+
+    });
+  }
+
+  addData(a) {
+    setState(() {
+      data.add(a);
+      print(data);
     });
   }
   
@@ -51,12 +61,20 @@ class _MyAppState extends State<MyApp> {
           actions: [
             IconButton(
                 icon: Icon(Icons.add_box_outlined),
-                onPressed: (){},
+                onPressed: () async {
+                  // 갤러리에서 이미지 가져오기 셋팅
+                  ImagePicker picker = ImagePicker();
+                  var image = await picker.pickImage(source: ImageSource.gallery);
+
+                  Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => Upload())
+                  );
+                },
                 iconSize: 30,
             )
           ]
       ),
-      body: [ Home(data : data), Text('샵페이지')][tab],
+      body: [ Home(data : data, addData : addData), Text('샵페이지')][tab],
       bottomNavigationBar: BottomNavigationBar(
         showSelectedLabels: false,
           showUnselectedLabels: false,
@@ -74,21 +92,52 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class Home extends StatelessWidget {
-  const Home({Key? key, this.data}) : super(key: key);
+class Home extends StatefulWidget {
+  const Home({Key? key, this.data, this.addData}) : super(key: key);
   //부모가 보내준 데이터는 수정하지 않는다
   final data;
+  final addData;
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+
+  ScrollController scroll = ScrollController();
+
+  getMore() async {
+    var result = await http.get(Uri.parse('https://codingapple1.github.io/app/more1.json'));
+    var result2 = jsonDecode(result.body);
+    widget.addData(result2);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    //높이 측정할때 사용하는 리스너
+    scroll.addListener(() {
+      //scroll.position.pixels 스크롤한 거리
+      //scroll.position.maxScrollExtent 스크롤의 최대 크기
+      if(scroll.position.pixels == scroll.position.maxScrollExtent) {
+        getMore();
+      }
+
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    if(data.isNotEmpty){
+    if(widget.data.isNotEmpty){
       return ListView.builder(
-          itemCount: 3,
+          controller: scroll,
+          //부모한테 받아온 data
+          itemCount: widget.data.length,
           itemBuilder: (c, i) {
             return Column(
               children: [
                 //웹상에서 가져온 이미지
-                Image.network(data[i]['image']),
+                Image.network(widget.data[i]['image']),
                 Container(
                   constraints: BoxConstraints(maxWidth: 600),
                   padding: EdgeInsets.all(20),
@@ -96,9 +145,9 @@ class Home extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(data[i]['likes'].toString()),
-                      Text(data[i]['user']),
-                      Text(data[i]['content']),
+                      Text('좋아요 ${widget.data[i]['likes'].toString()}'),
+                      Text(widget.data[i]['user']),
+                      Text(widget.data[i]['content']),
                     ],
                   ),
                 )
@@ -108,6 +157,32 @@ class Home extends StatelessWidget {
     } else {
       return CircularProgressIndicator();
     }
-
   }
 }
+
+class Upload extends StatelessWidget {
+  const Upload({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        actions: [
+          IconButton(onPressed: (){
+            Navigator.pop(context);
+          }, icon: Icon(Icons.close))
+        ],
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('data'),
+        ],
+      ),
+    );
+  }
+}
+
+
+
+
