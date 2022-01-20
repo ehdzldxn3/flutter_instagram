@@ -27,6 +27,32 @@ class _MyAppState extends State<MyApp> {
 
   int tab = 0;
   List data = [];
+  var userImg;
+  var userContent;
+
+  addMyData() {
+    var myData = {
+      'id': data.length,
+      'image': userImg,
+      'likes': 5,
+      'date': 'July 25',
+      'content': userContent,
+      'liked': false,
+      'user': 'John Kim'
+    };
+    setState(() {
+      data.insert(0, myData);
+    });
+
+    print(data);
+  }
+  
+  setUserContent(a) {
+    setState(() {
+      userContent = a;
+    });
+  }
+
   getData() async{
     //DIO 알아오기
     //get 요청
@@ -35,7 +61,6 @@ class _MyAppState extends State<MyApp> {
       //json 파싱
       var res = jsonDecode(get.body);
       data = res;
-
     });
   }
 
@@ -45,7 +70,8 @@ class _MyAppState extends State<MyApp> {
       print(data);
     });
   }
-  
+
+
   //위젯이 처음 실행될떄 실행하는 함수 
   @override
   void initState() {
@@ -66,9 +92,20 @@ class _MyAppState extends State<MyApp> {
                   //안드로이드는 사진첩에 그냥 접근 가능
                   ImagePicker picker = ImagePicker();
                   var img = await picker.pickImage(source: ImageSource.gallery);
-                  
+                  if(img != null){
+                    setState(() {
+                      userImg = File(img.path);
+                    });
+                  }
+
+                  Image.file(userImg);
+
+
                   Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => Upload())
+                    MaterialPageRoute(builder: (context) => Upload(
+                        userImg : userImg,
+                        setUserContent : setUserContent,
+                        addMyData : addMyData,))
                   );
                 },
                 iconSize: 30,
@@ -98,6 +135,7 @@ class Home extends StatefulWidget {
   //부모가 보내준 데이터는 수정하지 않는다
   final data;
   final addData;
+
 
   @override
   State<Home> createState() => _HomeState();
@@ -138,7 +176,9 @@ class _HomeState extends State<Home> {
             return Column(
               children: [
                 //웹상에서 가져온 이미지
-                Image.network(widget.data[i]['image']),
+                widget.data[i]['image'].runtimeType == String 
+                    ? Image.network(widget.data[i]['image'])
+                    : Image.file(widget.data[i]['image']),
                 Container(
                   constraints: BoxConstraints(maxWidth: 600),
                   padding: EdgeInsets.all(20),
@@ -162,7 +202,13 @@ class _HomeState extends State<Home> {
 }
 
 class Upload extends StatelessWidget {
-  const Upload({Key? key}) : super(key: key);
+
+
+  const Upload({Key? key, this.userImg, this.setUserContent, this.addMyData}) : super(key: key);
+
+  final userImg;
+  final setUserContent;
+  final addMyData;
 
   @override
   Widget build(BuildContext context) {
@@ -170,15 +216,27 @@ class Upload extends StatelessWidget {
       appBar: AppBar(
         actions: [
           IconButton(onPressed: (){
-            Navigator.pop(context);
-          }, icon: Icon(Icons.close))
+            print('asdf');
+            addMyData();
+          }, icon: Icon(Icons.send))
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('data'),
-        ],
+      body: Builder(
+        builder: (context) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: Image.file(userImg)),
+              Text('이미지업로드화면'),
+              TextField(onChanged: (text){
+                setUserContent(text);
+              },),
+              IconButton(onPressed: (){
+                Navigator.pop(context);
+              }, icon: Icon(Icons.close))
+            ],
+          );
+        }
       ),
     );
   }
