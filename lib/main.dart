@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import './style.dart' as style;
 import 'package:http/http.dart' as http;  //http 요청
-import 'dart:convert';
+import 'dart:convert';  //
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(
-      MaterialApp(
-        theme: style.theme,
-        home : MyApp(),
+      ChangeNotifierProvider(
+        create: (context) => Store(),
+        child: MaterialApp(
+          theme: style.theme,
+          home : MyApp(),
+        ),
       )
   );
 }
@@ -29,6 +34,16 @@ class _MyAppState extends State<MyApp> {
   List data = [];
   var userImg;
   var userContent;
+
+
+  saveData() async {
+    SharedPreferences storage = await SharedPreferences.getInstance();
+    storage.setString('key', 'value');
+    Map map = {'map' : 'map'};
+    storage.setString('map', jsonEncode(map));  //제이슨으로 바꿔줌 String
+    String result = storage.getString('map') ?? '없어요';  //데이터 널체크
+    print(jsonDecode(result));  //제이슨형식으로 해석해줌
+  }
 
   addMyData() {
     var myData = {
@@ -77,6 +92,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     getData();
+    saveData();
   }
 
   @override
@@ -186,8 +202,20 @@ class _HomeState extends State<Home> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      GestureDetector(
+                        child: Text(widget.data[i]['user']),
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                  pageBuilder: (context, a1, a2) => Profile(),
+                                  transitionsBuilder: (c, a1, a2, child) =>
+                                      FadeTransition(
+                                          opacity: a1, child: child)
+                              ));
+                        },
+                      ),
                       Text('좋아요 ${widget.data[i]['likes'].toString()}'),
-                      Text(widget.data[i]['user']),
                       Text(widget.data[i]['content']),
                     ],
                   ),
@@ -200,6 +228,49 @@ class _HomeState extends State<Home> {
     }
   }
 }
+
+//프로바이더 stroe
+class Store extends ChangeNotifier {
+  var name = 'test';
+  int follower = 0;
+  changeName() {
+    name = 'test11';
+    notifyListeners();
+  }
+  addFollower() {
+    print(follower);
+   notifyListeners();
+  }
+
+
+}
+
+class Profile extends StatelessWidget {
+  const Profile({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(context.watch<Store>().name),),
+      body: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.grey,
+          ),
+          Text('팔로워 ${context.watch<Store>().follower} 명'),
+
+          ElevatedButton(onPressed: (){
+            context.read()<Store>().addFollower();
+          }, child: Text('팔로우')),
+          //Text(context.watch<Store>().follower.toString()),
+        ],
+      ),
+    );
+  }
+}
+
 
 class Upload extends StatelessWidget {
 
