@@ -7,10 +7,17 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 
+import 'notification .dart';
+
+
 void main() {
   runApp(
-      ChangeNotifierProvider(
-        create: (context) => Store(),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (context) => Store()),
+
+        ],
+
         child: MaterialApp(
           theme: style.theme,
           home : MyApp(),
@@ -93,6 +100,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     getData();
     saveData();
+    initNotification();
   }
 
   @override
@@ -231,18 +239,30 @@ class _HomeState extends State<Home> {
 
 //프로바이더 stroe
 class Store extends ChangeNotifier {
-  var name = 'test';
+  String name = 'test';
   int follower = 0;
-  changeName() {
-    name = 'test11';
+  bool friend = false;
+
+  List profileImg = [];
+
+  getProfileImg() async{
+    http.Response result = await http.get(Uri.parse('https://codingapple1.github.io/app/profile.json'));
+    var res = jsonDecode(result.body);
+    profileImg = res;
     notifyListeners();
+
   }
+
   addFollower() {
-    print(follower);
+    if(!friend) {
+      follower++;
+      friend = true;
+    } else {
+      follower--;
+      friend = false;
+    }
    notifyListeners();
   }
-
-
 }
 
 class Profile extends StatelessWidget {
@@ -252,21 +272,23 @@ class Profile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(context.watch<Store>().name),),
-      body: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          CircleAvatar(
-            radius: 30,
-            backgroundColor: Colors.grey,
+      body: CustomScrollView(
+          
+        slivers: [
+          SliverToBoxAdapter(
+            child: ProfileHeader(),
           ),
-          Text('팔로워 ${context.watch<Store>().follower} 명'),
+          SliverGrid(
+          
+              delegate: SliverChildBuilderDelegate(
+                  (context, i) => Image.network(context.watch<Store>().profileImg[i],),
+                  childCount: context.watch<Store>().profileImg.length,
+              ),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 1),
+          )
 
-          ElevatedButton(onPressed: (){
-            context.read()<Store>().addFollower();
-          }, child: Text('팔로우')),
-          //Text(context.watch<Store>().follower.toString()),
         ],
-      ),
+      )
     );
   }
 }
@@ -313,6 +335,30 @@ class Upload extends StatelessWidget {
   }
 }
 
+class ProfileHeader extends StatelessWidget {
+  const ProfileHeader({Key? key}) : super(key: key);
 
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        CircleAvatar(
+          radius: 30,
+          backgroundColor: Colors.grey,
+        ),
+        Text('팔로워 ${context.watch<Store>().follower} 명'),
+
+        ElevatedButton(onPressed: (){
+          context.read<Store>().addFollower();
+        }, child: Text('팔로우')),
+        ElevatedButton(onPressed: (){
+          context.read<Store>().getProfileImg();
+        }, child: Text('사진가져오기'))
+        //Text(context.watch<Store>().follower.toString()),
+      ],
+    );
+  }
+}
 
 

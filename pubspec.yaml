@@ -33,6 +33,7 @@ dependencies:
   image_picker: ^0.8.4+4  #이미지사용
   shared_preferences: ^2.0.11 #캐시저장 DB아님
   provider: ^6.0.1 #store js 리덕스 같은거같음
+  flutter_local_notifications: ^9.1.5 #알림보내는거
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
