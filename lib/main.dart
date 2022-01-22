@@ -100,12 +100,15 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     getData();
     saveData();
-    initNotification();
+    initNotification(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(child: Text('+'),onPressed: (){
+        showNotification();
+      },),
       appBar: AppBar(
         title: Text('Instagram'),
           actions: [
