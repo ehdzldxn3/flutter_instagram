@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 final notifications = FlutterLocalNotificationsPlugin();
 
@@ -58,4 +60,45 @@ showNotification() async {
       NotificationDetails(android: androidDetails, iOS: iosDetails),
       payload: '부가정보' //유저한텐 보이지 않음 버그가 많아서 쓰지말래요
   );
+}
+
+showNotification2() async {
+  //시간과련 홤수
+  tz.initializeTimeZones();
+
+  var androidDetails = const AndroidNotificationDetails(
+    '유니크한 알림 ID',
+    '알림종류 설명',
+    priority: Priority.high,
+    importance: Importance.max,
+    color: Color.fromARGB(255, 255, 0, 0),
+  );
+  var iosDetails = const IOSNotificationDetails(
+    presentAlert: true,
+    presentBadge: true,
+    presentSound: true,
+  );
+
+  notifications.zonedSchedule(
+      2,
+      '제목2',
+      '내용2',
+      //현재시간  + 5초후
+      tz.TZDateTime.now(tz.local).add(Duration(seconds: 5)),
+      NotificationDetails(android: androidDetails, iOS: iosDetails),
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+      UILocalNotificationDateInterpretation.absoluteTime
+  );
+}
+
+//날짜 구하기
+makeDate(hour, min, sec){
+  var now = tz.TZDateTime.now(tz.local);
+  var when = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, min, sec);
+  if (when.isBefore(now)) {
+    return when.add(Duration(days: 1));
+  } else {
+    return when;
+  }
 }
